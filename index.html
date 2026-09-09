@@ -1,0 +1,1349 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Desafio 21 Dias — Pedro Gameiro</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0a0e1a; --surface:#111827; --surface-2:#0d1220; --border:#1f2937; --border-2:#2a3444;
+    --ink-1:#e4e6eb; --ink-2:#9ca3af; --ink-3:#6b7280;
+    --teal:#00949a; --teal-hover:#00b3ba; --teal-soft:rgba(0,148,154,.15);
+    --good:#10b981; --good-soft:rgba(16,185,129,.14);
+    --warning:#f59e0b; --warning-soft:rgba(245,158,11,.14);
+    --critical:#ef4444; --critical-soft:rgba(239,68,68,.14);
+    --blue:#60a5fa; --blue-soft:rgba(96,165,250,.14);
+    --neutral:#4b5563; --neutral-soft:rgba(75,85,99,.18);
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 10px 28px -14px rgba(0,0,0,.55);
+  }
+  body{ background:var(--bg); }
+  *{ box-sizing:border-box; }
+  body{ margin:0; color:var(--ink-1); font-family:"Open Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1240px; margin:0 auto; padding:26px 20px 90px; }
+  h1,h2,h3{ font-family:"Montserrat", system-ui, sans-serif; margin:0; letter-spacing:-0.01em; text-wrap:balance; }
+  .mono, .num{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  .eyebrow{ font-family:"Montserrat", sans-serif; font-weight:700; font-size:10.5px; letter-spacing:0.09em; text-transform:uppercase; color:var(--ink-3); }
+  a{ color:var(--teal); }
+
+  /* ---------- draft ribbon ---------- */
+  .draft-ribbon{ background:var(--warning-soft); border:1px solid var(--warning); color:var(--warning); font-family:"Montserrat",sans-serif; font-weight:700; font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase; text-align:center; padding:8px 12px; }
+
+  /* ---------- Filtro de datas ---------- */
+  .filter-bar{ margin-top:18px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+  .filter-row{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; }
+  .filter-shortcuts{ display:flex; gap:8px; flex-wrap:wrap; }
+  .filter-btn{ font-family:"Montserrat",sans-serif; font-weight:700; font-size:11.5px; letter-spacing:0.02em; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 13px; cursor:pointer; }
+  .filter-btn.active{ color:#fff; background:var(--teal); border-color:var(--teal); }
+  .filter-btn:hover{ border-color:var(--teal); }
+  .filter-dates{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--ink-2); }
+  .filter-dates label{ display:flex; align-items:center; gap:5px; }
+  .filter-dates input[type=date]{ background:var(--surface-2); border:1px solid var(--border); color:var(--ink-1); border-radius:7px; padding:5px 8px; font-family:"IBM Plex Mono",monospace; font-size:12px; color-scheme:dark; }
+  .filter-dates button{ font-family:"Montserrat",sans-serif; font-weight:700; font-size:11px; color:var(--ink-1); background:var(--surface-2); border:1px solid var(--border); border-radius:7px; padding:6px 12px; cursor:pointer; }
+  .filter-dates button:hover{ border-color:var(--teal); color:var(--teal); }
+  .filter-note{ font-size:11px; color:var(--ink-3); line-height:1.5; }
+  @media (max-width:640px){ .filter-row{ flex-direction:column; align-items:stretch; } .filter-dates{ justify-content:space-between; } }
+
+  /* ---------- Header ---------- */
+  header.top{ display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; align-items:flex-end; padding:22px 0 18px; border-bottom:1px solid var(--border); }
+  .brand{ display:flex; align-items:center; margin-bottom:12px; }
+  /* Logótipo oficial: tamanho contido, proporção original preservada (width:auto), nunca
+     esticado nem recolorido — só altura fixa, nunca stretch nem crop adicional. */
+  .brand-logo{ display:block; height:26px; width:auto; }
+  header.top h1{ font-size:25px; font-weight:800; }
+  header.top .sub{ color:var(--ink-2); font-size:14px; margin-top:4px; }
+  .meta-right{ text-align:right; display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+  .period-pill{ font-size:12.5px; color:var(--ink-2); background:var(--surface); border:1px solid var(--border); padding:6px 12px; border-radius:999px; }
+  .updated-line{ font-size:11px; color:var(--ink-3); }
+  .updated-line b{ color:var(--ink-2); font-weight:600; }
+  .updated-line.main{ font-size:12.5px; color:var(--ink-2); font-weight:700; font-family:"Montserrat",sans-serif; }
+
+  /* ---------- Status / leitura banner ---------- */
+  .status-banner{ margin-top:18px; display:flex; gap:14px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow); }
+  .status-dot{ width:9px; height:9px; border-radius:50%; background:var(--teal); margin-top:6px; flex:none; box-shadow:0 0 0 4px var(--teal-soft); }
+  .status-banner p{ margin:0; font-size:14px; color:var(--ink-1); line-height:1.6; }
+  .status-banner .tag{ font-family:"Montserrat",sans-serif; font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--teal); display:block; margin-bottom:3px; }
+
+  /* ---------- Section shell ---------- */
+  section{ margin-top:32px; }
+  .sec-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:13px; flex-wrap:wrap; }
+  .sec-head h2{ font-size:16px; font-weight:800; }
+  .sec-head .src{ font-size:11px; color:var(--ink-3); }
+  .sec-head .src b{ color:var(--ink-2); font-weight:600; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); }
+  .scroll-x{ overflow-x:auto; }
+
+  .pending-pill{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:var(--ink-3); background:var(--surface-2); border:1px dashed var(--border-2); padding:2px 9px 2px 7px; border-radius:999px; }
+  .pending-pill::before{ content:"○"; font-size:10px; }
+  .manual-tag{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:var(--ink-3); background:var(--surface-2); border:1px solid var(--border); padding:2px 8px 2px 6px; border-radius:999px; }
+  .manual-tag::before{ content:"✎"; font-size:10px; }
+
+  /* ---------- Orçamento por fase ---------- */
+  .phase-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  .phase-card{ padding:15px 15px 13px; display:flex; flex-direction:column; gap:8px; }
+  .phase-card.total{ background:var(--teal-soft); border-color:transparent; }
+  .phase-card h3{ font-size:13px; font-weight:800; }
+  .phase-card .row{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2); }
+  .phase-card .row b{ color:var(--ink-1); font-weight:700; font-family:"IBM Plex Mono",monospace; }
+  .phase-bar-track{ background:var(--surface-2); border-radius:6px; height:7px; overflow:hidden; margin:2px 0; }
+  .phase-bar-fill{ height:100%; border-radius:6px; background:var(--teal); }
+  .phase-pacing{ font-size:11px; color:var(--ink-3); line-height:1.45; margin-top:2px; }
+  .phase-card.pending{ opacity:.6; }
+  .phase-card.pending .phase-bar-track{ background:repeating-linear-gradient(135deg, var(--surface-2), var(--surface-2) 5px, var(--border-2) 5px, var(--border-2) 10px); }
+
+  /* ---------- Break-even ---------- */
+  .breakeven-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .be-card{ padding:15px 15px 13px; }
+  .be-card .lbl{ font-size:11px; color:var(--ink-3); font-weight:600; }
+  .be-card .val{ font-size:21px; font-weight:800; margin-top:5px; }
+  .be-card .val.pending{ font-size:13px; font-weight:600; color:var(--ink-3); font-style:italic; font-family:"Open Sans",sans-serif; }
+
+  /* ---------- KPI grid (visão executiva) ---------- */
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .kpi{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 16px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:7px; }
+  .kpi-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .kpi .lbl{ font-size:11.5px; color:var(--ink-3); font-weight:600; font-family:"Montserrat",sans-serif; text-transform:uppercase; letter-spacing:0.03em; }
+  .kpi .val{ font-size:26px; font-weight:800; line-height:1.1; }
+  .semaforo{ width:9px; height:9px; border-radius:50%; background:var(--neutral); flex:none; margin-top:3px; }
+  .semaforo.good{ background:var(--good); } .semaforo.warning{ background:var(--warning); } .semaforo.critical{ background:var(--critical); }
+  .kpi-meta-row{ display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--ink-2); border-top:1px solid var(--border); padding-top:8px; margin-top:2px; }
+  .kpi-meta-row .r{ display:flex; justify-content:space-between; gap:8px; }
+  .kpi-meta-row .r span:first-child{ color:var(--ink-3); }
+  .kpi-meta-row .r b{ font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--ink-1); }
+  .kpi-meta-row .r b.up{ color:var(--good); } .kpi-meta-row .r b.down{ color:var(--critical); } .kpi-meta-row .r b.flat{ color:var(--ink-2); }
+
+  /* ---------- Projeção ---------- */
+  .projection-card{ padding:18px 20px; font-size:14px; line-height:1.6; }
+  .projection-card b{ color:var(--teal); font-family:"IBM Plex Mono",monospace; }
+
+  /* ---------- Charts ---------- */
+  .chart-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .chart-card{ padding:18px 18px 14px; }
+  .chart-card h3{ font-size:13px; font-weight:700; margin-bottom:2px; }
+  .chart-card .note{ font-size:11px; color:var(--ink-3); margin-bottom:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .axis-lbl{ fill:var(--ink-3); font-size:9.5px; }
+  .grid-line{ stroke:var(--border); stroke-width:1; }
+  .legend-row{ display:flex; gap:14px; margin-top:6px; font-size:10.5px; color:var(--ink-2); flex-wrap:wrap; }
+  .legend-row .sw{ display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; }
+
+  /* ---------- Meta Ads detailed grid ---------- */
+  .sec-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:9px; }
+  .sec-grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+  .sec-grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+  .mini{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 12px 10px; }
+  .mini.pending{ border-style:dashed; opacity:.55; }
+  .mini .lbl{ font-size:10px; color:var(--ink-3); font-weight:600; text-transform:uppercase; letter-spacing:0.03em; font-family:"Montserrat",sans-serif; }
+  .mini .val{ font-size:16px; font-weight:800; margin-top:4px; }
+  .mini .val.pending{ font-size:11.5px; font-weight:600; color:var(--ink-3); font-style:italic; font-family:"Open Sans",sans-serif; }
+
+  /* ---------- Audiência ---------- */
+  .aud-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .aud-card{ padding:17px; border-top:3px solid var(--aud-color); }
+  .aud-head{ display:flex; align-items:center; gap:9px; margin-bottom:13px; }
+  .aud-dot{ width:11px; height:11px; border-radius:3px; background:var(--aud-color); }
+  .aud-head h3{ font-size:14.5px; font-weight:800; }
+  .aud-head .share{ margin-left:auto; font-size:11.5px; color:var(--ink-3); }
+  .aud-rows{ display:grid; grid-template-columns:1fr 1fr; gap:9px 16px; }
+  .aud-rows .r{ display:flex; flex-direction:column; gap:2px; }
+  .aud-rows .r .l{ font-size:10.5px; color:var(--ink-3); }
+  .aud-rows .r .v{ font-size:15.5px; font-weight:700; }
+  .aud-rows .r.hero .v{ font-size:20px; color:var(--aud-color); }
+
+  /* ---------- Criativos (cards) ---------- */
+  .creative-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .creative-breakdown{ display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--border); padding-top:9px; font-size:11px; }
+  .creative-breakdown .bd-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .creative-breakdown .bd-row .nums{ font-family:"IBM Plex Mono",monospace; color:var(--ink-1); font-size:11px; }
+  .creative-card{ padding:0; overflow:hidden; }
+  .creative-thumb{ background:var(--surface-2); border-bottom:1px solid var(--border); height:96px; display:flex; align-items:center; justify-content:center; }
+  .creative-thumb .pending-pill{ font-size:9.5px; }
+  .creative-body{ padding:12px 13px 13px; display:flex; flex-direction:column; gap:8px; }
+  .creative-name-row{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .creative-name-row .name{ font-weight:700; font-size:13px; }
+  .type-badge{ font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px; white-space:nowrap; font-family:"Montserrat",sans-serif; }
+  .type-badge.video{ background:var(--teal-soft); color:var(--teal-hover); }
+  .type-badge.estatico{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border); }
+  .aud-chip{ font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px; font-family:"Montserrat",sans-serif; }
+  .aud-chip.sinais{ background:var(--warning-soft); color:var(--warning); }
+  .aud-chip.aberto{ background:var(--blue-soft); color:var(--blue); }
+  .creative-funnel{ display:flex; align-items:center; gap:4px; font-size:10.5px; color:var(--ink-3); flex-wrap:wrap; }
+  .creative-funnel b{ color:var(--ink-1); font-family:"IBM Plex Mono",monospace; }
+  .creative-stats{ display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; border-top:1px solid var(--border); padding-top:8px; }
+  .creative-stats .s{ display:flex; flex-direction:column; }
+  .creative-stats .s .l{ font-size:9.5px; color:var(--ink-3); }
+  .creative-stats .s .v{ font-size:13.5px; font-weight:700; }
+  .creative-link{ font-size:11px; }
+
+  /* ---------- Funil ---------- */
+  .funnel{ display:flex; flex-direction:column; gap:0; padding:20px 20px 8px; }
+  .funnel-stage{ display:grid; grid-template-columns:170px 1fr 130px; align-items:center; gap:16px; padding:11px 0; }
+  .funnel-bar-track{ background:var(--surface-2); border-radius:7px; height:30px; position:relative; overflow:hidden; }
+  .funnel-bar-fill{ position:absolute; inset:0; border-radius:7px; background:var(--teal); }
+  .funnel-bar-fill.pending{ background:repeating-linear-gradient(135deg, var(--surface-2), var(--surface-2) 6px, var(--border-2) 6px, var(--border-2) 12px); }
+  .funnel-stage .name{ font-size:13px; font-weight:700; }
+  .funnel-stage .name small{ display:block; font-weight:400; color:var(--ink-3); font-size:10.5px; margin-top:2px; }
+  .funnel-stage .amount{ text-align:right; font-size:18px; font-weight:800; }
+  .funnel-stage .amount small{ display:block; font-weight:500; font-size:10.5px; color:var(--ink-3); }
+  .funnel-rate{ text-align:center; font-size:11.5px; color:var(--ink-3); padding:4px 0 4px 170px; }
+  .funnel-rate b{ color:var(--ink-2); }
+
+  /* ---------- Locked / unavailable panels ---------- */
+  .locked{ padding:22px; text-align:center; }
+  .locked .icon{ font-size:20px; margin-bottom:8px; opacity:.6; }
+  .locked h3{ font-size:13.5px; font-weight:700; margin-bottom:5px; }
+  .locked p{ font-size:12px; color:var(--ink-3); max-width:480px; margin:0 auto; line-height:1.55; }
+
+  /* ---------- Leitura do período ---------- */
+  .leitura-card{ padding:18px 20px; }
+  .leitura-card ul{ margin:0; padding-left:18px; font-size:13.5px; line-height:1.75; color:var(--ink-1); }
+  .leitura-card li{ margin-bottom:4px; }
+  .leitura-card li b{ color:var(--teal-hover); }
+
+  /* ---------- Glossário / rodapé ---------- */
+  .glossary{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px 24px; padding:18px 20px; font-size:12px; color:var(--ink-2); }
+  .glossary dt{ font-weight:700; color:var(--ink-1); font-size:12px; font-family:"Montserrat",sans-serif; }
+  .glossary dd{ margin:2px 0 9px; color:var(--ink-3); line-height:1.45; }
+  .ghl-note{ padding:16px 20px; font-size:12px; color:var(--ink-2); line-height:1.65; }
+  .ghl-note b{ color:var(--ink-1); }
+  footer.foot{ margin-top:36px; padding-top:16px; border-top:1px solid var(--border); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:11px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace; }
+
+  @media (max-width:960px){
+    .phase-grid{ grid-template-columns:repeat(2,1fr); }
+    .kpi-grid{ grid-template-columns:1fr 1fr; }
+    .sec-grid{ grid-template-columns:repeat(3,1fr); }
+    .sec-grid-4{ grid-template-columns:repeat(2,1fr); }
+    .sec-grid-3{ grid-template-columns:repeat(2,1fr); }
+    .breakeven-grid{ grid-template-columns:1fr 1fr; }
+    .chart-row{ grid-template-columns:1fr; }
+    .aud-grid{ grid-template-columns:1fr; }
+    .creative-grid{ grid-template-columns:1fr 1fr; }
+    .glossary{ grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width:640px){
+    .phase-grid{ grid-template-columns:1fr; }
+    .kpi-grid{ grid-template-columns:1fr; }
+    .sec-grid{ grid-template-columns:repeat(2,1fr); }
+    .sec-grid-4{ grid-template-columns:1fr; }
+    .sec-grid-3{ grid-template-columns:1fr; }
+    .breakeven-grid{ grid-template-columns:1fr; }
+    .creative-grid{ grid-template-columns:1fr; }
+    .glossary{ grid-template-columns:1fr; }
+    .funnel-stage{ grid-template-columns:120px 1fr 90px; gap:10px; }
+    .funnel-rate{ padding-left:120px; }
+    header.top{ align-items:flex-start; }
+    .meta-right{ align-items:flex-start; text-align:left; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Open+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="brand"><img class="brand-logo" src="data:image/png;base64,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" alt="Outlier Agency" width="147" height="37"></div>
+      <h1>Pedro Gameiro — Desafio 21 Dias</h1>
+      <div class="sub">Acompanhamento de lançamento · Fase 1, Captação</div>
+    </div>
+    <div class="meta-right">
+      <div class="period-pill" id="periodPill">—</div>
+      <div class="updated-line main" id="updMain">Última atualização: —</div>
+      <div class="updated-line">Meta Ads: <b id="updMeta">—</b> · atualização automática horária</div>
+      <div class="updated-line">Dados manuais: <b id="updManual">—</b></div>
+    </div>
+  </header>
+
+  <div class="card filter-bar" id="filterBar">
+    <div class="filter-row">
+      <div class="filter-shortcuts">
+        <button type="button" class="filter-btn active" data-range="all">Período todo</button>
+        <button type="button" class="filter-btn" data-range="today">Hoje</button>
+        <button type="button" class="filter-btn" data-range="last7">Últimos 7 dias</button>
+      </div>
+      <div class="filter-dates">
+        <label>De <input type="date" id="filterStart"></label>
+        <label>Até <input type="date" id="filterEnd"></label>
+        <button type="button" id="filterApply">Aplicar</button>
+        <button type="button" id="filterClear">Limpar</button>
+      </div>
+    </div>
+    <div class="filter-note" id="filterNote"></div>
+  </div>
+
+  <div class="status-banner">
+    <div class="status-dot"></div>
+    <div>
+      <span class="tag">Estado</span>
+      <p id="statusText">A carregar…</p>
+    </div>
+  </div>
+
+  <!-- BREAK-EVEN (no topo, conforme pedido: break-even + ROAS são a primeira leitura financeira da página) -->
+  <section>
+    <div class="sec-head">
+      <h2>Break-even &amp; ROAS</h2>
+      <div class="src">Fonte: <b>manual</b> (vendas/faturação) — só calcula com dados financeiros completos</div>
+    </div>
+    <div class="breakeven-grid" id="breakevenGrid"></div>
+  </section>
+
+  <!-- ORÇAMENTO POR FASE -->
+  <section>
+    <div class="sec-head">
+      <h2>Orçamento por fase</h2>
+      <div class="src">Fonte: <b>plano definido com a Outlier</b> · fases sem budget/datas documentadas mostram "Dados pendentes"</div>
+    </div>
+    <div class="phase-grid" id="phaseGrid"></div>
+  </section>
+
+  <!-- VISÃO EXECUTIVA -->
+  <section>
+    <div class="sec-head">
+      <h2>Visão executiva</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> · semáforos só ativos quando existir threshold documentado</div>
+    </div>
+    <div class="kpi-grid" id="execGrid"></div>
+  </section>
+
+  <!-- PROJEÇÃO -->
+  <section>
+    <div class="card projection-card" id="projectionBox"></div>
+  </section>
+
+  <!-- EVOLUÇÃO DIÁRIA -->
+  <section>
+    <div class="sec-head">
+      <h2>Evolução diária</h2>
+      <div class="src">Fonte: <b>Meta Ads</b>, por dia · histórico cresce a cada atualização</div>
+    </div>
+    <div class="chart-row">
+      <div class="card chart-card">
+        <h3>Volume</h3>
+        <div class="note" id="chartNoteVolume"></div>
+        <div id="chartVolume"></div>
+        <div class="legend-row">
+          <span><span class="sw" style="background:var(--teal)"></span>Investimento acumulado</span>
+          <span><span class="sw" style="background:var(--blue)"></span>Leads acumuladas</span>
+        </div>
+        <div class="note" id="chartBandNoteVolume" style="margin-top:6px;margin-bottom:0;"></div>
+      </div>
+      <div class="card chart-card">
+        <h3>Eficiência</h3>
+        <div class="note" id="chartNoteEficiencia"></div>
+        <div id="chartEficiencia"></div>
+        <div class="legend-row">
+          <span><span class="sw" style="background:var(--teal)"></span>CPL</span>
+          <span><span class="sw" style="background:var(--warning)"></span>CPM</span>
+          <span><span class="sw" style="background:var(--blue)"></span>CTR link</span>
+          <span><span class="sw" style="background:var(--good)"></span>Tx conv. LPV</span>
+        </div>
+        <div class="note" id="chartBandNoteEficiencia" style="margin-top:6px;margin-bottom:0;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- META ADS DETALHADO -->
+  <section>
+    <div class="sec-head">
+      <h2>Meta Ads</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> · campanha principal de captação</div>
+    </div>
+    <div class="sec-grid" id="metaDetailGrid"></div>
+  </section>
+
+  <!-- AUDIÊNCIAS -->
+  <section>
+    <div class="sec-head">
+      <h2>Performance por audiência</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> · mesmos criativos nos dois ad sets</div>
+    </div>
+    <div class="aud-grid" id="audGrid"></div>
+  </section>
+
+  <!-- CRIATIVOS -->
+  <section>
+    <div class="sec-head">
+      <h2>Criativos</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> · thumbnail, link do anúncio e vendas por criativo dependem de integração adicional</div>
+    </div>
+    <div class="creative-grid" id="creativeGrid"></div>
+  </section>
+
+  <!-- MÉTRICAS DE LANÇAMENTO -->
+  <section>
+    <div class="sec-head">
+      <h2>Pago vs Orgânico</h2>
+      <div class="src">Fonte prevista: <b>UTMs / GHL</b></div>
+    </div>
+    <div id="acquisitionBox"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Quente vs Frio</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> · Frio = prospeção (Sinais + Aberto); Quente = Retargeting (ainda não ativo nesta fase)</div>
+    </div>
+    <div id="temperatureBox"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>WhatsApp</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> (leads totais) + <span class="manual-tag">manual</span> · fonte prevista: <b>Sendflow</b></div>
+    </div>
+    <div id="whatsappBox"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Funil de venda</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> (LPV, Leads) + <span class="manual-tag">manual</span> (WhatsApp) + checkout/vendas com fonte prevista: <b>Hotmart</b></div>
+    </div>
+    <div class="card funnel" id="funnelBox"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Dinheiro</h2>
+      <div class="src">Fonte: <b>Meta Ads</b> (investimento) + <span class="manual-tag">manual</span> (receita/CAC/break-even) · fonte prevista: <b>Hotmart</b></div>
+    </div>
+    <div class="sec-grid" id="moneyBox"></div>
+  </section>
+
+  <!-- LEITURA DO PERÍODO -->
+  <section>
+    <div class="sec-head"><h2>Leitura do período</h2></div>
+    <div class="card leitura-card" id="leituraBox"></div>
+  </section>
+
+  <!-- GLOSSÁRIO -->
+  <section>
+    <div class="card">
+      <dl class="glossary">
+        <dt>CPL</dt><dd>Custo por lead. Investimento a dividir pelo número de inscrições no formulário.</dd>
+        <dt>LPV</dt><dd>Landing Page View. Pessoas que abriram a página de destino depois de clicar no anúncio.</dd>
+        <dt>CTR Link</dt><dd>Percentagem de pessoas que, ao verem o anúncio, clicaram no link de destino.</dd>
+        <dt>CTR Tudo</dt><dd>Percentagem de pessoas que clicaram em qualquer parte do anúncio (link, perfil, reações), não só no link.</dd>
+        <dt>CPC Link</dt><dd>Custo médio por cada clique no link do anúncio.</dd>
+        <dt>CPM</dt><dd>Custo por mil impressões.</dd>
+        <dt>Frequency</dt><dd>Número médio de vezes que a mesma pessoa viu o anúncio no período.</dd>
+        <dt>Tx Conv. LPV</dt><dd>Percentagem de visitantes da landing page que submeteram o formulário.</dd>
+        <dt>Tx Conv. LPC</dt><dd>Percentagem de cliques no link que resultaram em formulário submetido.</dd>
+        <dt>Tx Clique → VP</dt><dd>Percentagem de cliques no link que chegaram a abrir a landing page.</dd>
+        <dt>SubmitApplication</dt><dd>Evento que confirma a submissão do formulário de inscrição no site.</dd>
+        <dt>CBO</dt><dd>Orçamento gerido ao nível da campanha, distribuído automaticamente entre os ad sets.</dd>
+        <dt>Audiência quente/fria</dt><dd>Quente: público construído a partir de sinais existentes do negócio (pixel, lookalike, base própria). Frio: público amplo (broad), sem sinais prévios.</dd>
+        <dt>Checkout View</dt><dd>Visita à página de checkout da oferta, depois de o lead ter avançado no funil de venda.</dd>
+        <dt>Downsell</dt><dd>Oferta alternativa, mais barata, apresentada a quem não comprou a oferta principal.</dd>
+        <dt>CAC</dt><dd>Custo de Aquisição de Cliente. Investimento em publicidade a dividir pelo número de vendas.</dd>
+        <dt>ROAS</dt><dd>Retorno sobre o investimento em publicidade (faturação a dividir pelo investimento). Bruto usa a receita total; líquido desconta a parte do coprodutor e outros custos diretos da venda.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- NOTA META VS GHL -->
+  <section>
+    <div class="card ghl-note" id="ghlNote"></div>
+  </section>
+
+  <footer class="foot">
+    <div id="footLine"></div>
+  </footer>
+
+</div>
+
+<script>
+/* =========================================================================
+   DASHBOARD DATA — V2 (draft)
+   Separação em 4 blocos, conforme pedido pela Outlier:
+   - DATA.config: targets, budgets por fase, datas do plano, thresholds.
+   - DATA.meta: dados automáticos do Meta Ads (rotina horária só edita aqui).
+   - DATA.manual: WhatsApp, aquisição, vendas (checkout/faturação).
+   - DATA.analysis: leitura escrita do período (texto interpretativo, não um
+     campo de dados — nunca confundir com números reais de Meta/manual).
+   Nada aqui foi inventado: valores sem fonte documentada aparecem como
+   "Dados pendentes" / "Dados ainda não disponíveis" / "Aguardando dados de
+   vendas", nunca como zero silencioso.
+========================================================================= */
+const DATA = {
+  config: {
+    campaignStart: "2026-09-08T00:00:00+01:00",
+    captacaoEnd:   "2026-09-22T19:00:00+01:00",
+    vagasOpen:     "2026-09-22T19:30:00+01:00",
+    phases: {
+      distribuicao: { label:"Distribuição", budget:null, start:null, end:null, documented:false },
+      captacao:     { label:"Captação",     budget:850,  start:"2026-09-08T00:00:00+01:00", end:"2026-09-22T19:00:00+01:00", documented:true },
+      antecipacao:  { label:"Antecipação",  budget:null, start:null, end:null, documented:false },
+      remarketing:  { label:"Remarketing",  budget:150,  start:null, end:null, documented:false } // budget reservado documentado; datas da fase ainda não
+    },
+    // Meta de leads/CPL e threshold de semáforo vêm de benchmarks de lançamentos semelhantes
+    // (mesma área), confirmado pelo Daniel — não dependem do histórico próprio do Pedro.
+    // Ainda não foram inseridos os valores concretos. Nunca inventar; ficam null até o
+    // Daniel/Outlier definirem o benchmark, e não porque falte mais tempo de campanha.
+    targets: { leadsGoal:null, cplTarget:null, documented:false },
+    thresholds: { documented:false }
+    // "Quente vs Frio" = temperatura da AUDIÊNCIA de aquisição (não qualificação de lead no GHL).
+    // Correção do Daniel (08/09/2026): Sinais e Aberto são AMBOS prospeção fria nesta Fase 1 —
+    // Sinais usa sinais/sugestões de audiência, mas isso não o torna "quente"; só existe público
+    // quente quando arrancar o Retargeting (visitantes do site, engagers IG/FB, visualizadores de
+    // vídeo, listas próprias). A lógica de classificação vive na função temperature() mais abaixo:
+    // Frio = toda a audiência em DATA.meta.audiences exceto a de key "retargeting";
+    // Quente = a audiência de key "retargeting", só existe quando essa entrada aparecer no array
+    // (e nesse ponto a rotina horária também deve ligar DATA.meta.retargeting.started = true).
+  },
+  meta: {
+    source: "meta",
+    updatedAt: "2026-09-09T12:06:00+01:00",
+    // Nota (09/09/2026, correção pontual pós-handover): spend/leads/cpl atualizados com os
+    // dados reais da última execução da rotina horária antes desta ter passado a apontar
+    // para este artifact (ver claude/pedro-gameiro-desafio21-dashboard-v2-draft.md, 6ª ronda).
+    // Os restantes campos de account (lpv, reach, impressions, ctr, cpm, frequency, etc.),
+    // audiences, daily e creatives NÃO foram tocados nesta correção pontual — ficam com os
+    // valores do dia 1 até a próxima execução automática real (já a apontar para o V2) os
+    // repor todos em conjunto. Isto significa que, até lá, "Taxa de Conversão da Página",
+    // "Tx Clique → VP" e "Taxa LPV → Leads" no funil ficam temporariamente desalinhadas
+    // (lpv ainda do dia 1, leads já atualizado) — não corrigir isso à mão para não arriscar
+    // dividir por um lpv inventado ou partir os cálculos que assumem lpv sempre > 0.
+    account: {
+      spend:112.43, leads:62, cpl:1.81,
+      reach:12726, impressions:17332, clicksAll:560, ctrAll:3.15,
+      linkClicks:339, ctrLink:1.96, cpcLink:0.22, cpm:4.38, frequency:1.36,
+      lpv:236, cpLpv:0.32,
+      purchases:null, costPerPurchase:null // Fase 1 não tem evento de compra configurado
+    },
+    daily: [
+      // lpv:236 é real (é o total da conta, e este é o único dia até agora — logo o total
+      // da conta = o LPV deste dia).
+      //
+      // Campos adicionais (09/09/2026, filtro de datas): a partir de agora cada dia guarda
+      // também os restantes campos de conta, a quebra por audiência e a quebra por criativo
+      // desse dia — necessários para o filtro de datas recalcular Visão executiva, Meta Ads
+      // detalhado, Performance por audiência e Criativos só com os dias selecionados. Este
+      // dia 1 é o único histórico anterior a esta funcionalidade; como foi o único dia até
+      // agora, os totais de conta/audiências/criativos já guardados acima (cumulativos)
+      // coincidem exatamente com este dia, por isso reutilizámo-los aqui (mesma lógica já
+      // usada para lpv/cpm/ctrLink). As duas exceções são impressions/linkClicks por
+      // audiência (sinais/aberto), que não estavam guardados em separado — foram
+      // reconstruídos a partir de reach×frequência e do CTR/CPC já publicados para este
+      // dia (arredondamento residual esperado, como já documentado noutras secções deste
+      // dashboard). A partir da próxima execução real, a rotina horária pede estes campos
+      // diretamente à Meta por dia/conta/ad set/anúncio (ver documento do projeto, 8ª ronda)
+      // — nenhum novo dia é reconstruído desta forma, só este backfill único do dia 1.
+      { date:"2026-09-08", spend:75.84, leads:32, cpm:4.38, ctrLink:1.96, lpv:236,
+        reach:12726, impressions:17332, clicksAll:560, ctrAll:3.15, linkClicks:339, cpcLink:0.22, frequency:1.36,
+        audiences: [
+          { key:"sinais", spend:27.65, leads:17, cpl:1.63, ctr:2.14, cpc:0.22, cpm:4.65, reach:5140, frequency:1.16, lpv:88, impressions:5962, linkClicks:128 },
+          { key:"aberto", spend:48.19, leads:15, cpl:3.21, ctr:1.86, cpc:0.23, cpm:4.23, reach:8668, frequency:1.31, lpv:149, impressions:11355, linkClicks:211 }
+        ],
+        creatives: [
+          { adset:"sinais", type:"video",    name:"AD02",                   adId:"120251546019880294", spend:20.61, leads:16, cpl:1.29, impressions:4044, linkClicks:84, lpv:62, vendas:null },
+          { adset:"sinais", type:"video",    name:"AD01",                   adId:"120251433571600294", spend:2.67,  leads:0,  cpl:null, impressions:608,  linkClicks:23, lpv:13, vendas:null },
+          { adset:"sinais", type:"estatico", name:"Estático 01 · Desafio",  adId:"120251548735230294", spend:2.75,  leads:0,  cpl:null, impressions:932,  linkClicks:11, lpv:7,  vendas:null },
+          { adset:"sinais", type:"estatico", name:"Estático 02 · Rotina",   adId:"120251548753200294", spend:1.62,  leads:1,  cpl:1.62, impressions:359,  linkClicks:7,  lpv:6,  vendas:null },
+          { adset:"aberto", type:"video",    name:"AD02",                   adId:"120251543963010294", spend:39.23, leads:13, cpl:3.02, impressions:8895, linkClicks:153, lpv:110, vendas:null },
+          { adset:"aberto", type:"video",    name:"AD01",                   adId:"120251433318410294", spend:3.83,  leads:1,  cpl:3.83, impressions:1232, linkClicks:48, lpv:35, vendas:null },
+          { adset:"aberto", type:"estatico", name:"Estático 01 · Desafio",  adId:"120251548743180294", spend:2.45,  leads:1,  cpl:2.45, impressions:736,  linkClicks:7,  lpv:2,  vendas:null },
+          { adset:"aberto", type:"estatico", name:"Estático 02 · Rotina",   adId:"120251548776300294", spend:2.68,  leads:0,  cpl:null, impressions:524,  linkClicks:4,  lpv:2,  vendas:null }
+        ]
+      }
+    ],
+    audiences: [
+      { key:"sinais", label:"Público Sinais", emoji:"🟡", color:"var(--warning)", spend:27.65, leads:17, cpl:1.63, ctr:2.14, cpc:0.22, cpm:4.65, reach:5140, frequency:1.16, lpv:88 },
+      { key:"aberto", label:"Público Aberto", emoji:"🔵", color:"var(--blue)",    spend:48.19, leads:15, cpl:3.21, ctr:1.86, cpc:0.23, cpm:4.23, reach:8668, frequency:1.31, lpv:149 }
+    ],
+    retargeting: { started:false },
+    creatives: [
+      { adset:"sinais", type:"video",    name:"AD02",                   adId:"120251546019880294", spend:20.61, leads:16, cpl:1.29, impressions:4044, linkClicks:84, lpv:62, vendas:null },
+      { adset:"sinais", type:"video",    name:"AD01",                   adId:"120251433571600294", spend:2.67,  leads:0,  cpl:null, impressions:608,  linkClicks:23, lpv:13, vendas:null },
+      { adset:"sinais", type:"estatico", name:"Estático 01 · Desafio",  adId:"120251548735230294", spend:2.75,  leads:0,  cpl:null, impressions:932,  linkClicks:11, lpv:7,  vendas:null },
+      { adset:"sinais", type:"estatico", name:"Estático 02 · Rotina",   adId:"120251548753200294", spend:1.62,  leads:1,  cpl:1.62, impressions:359,  linkClicks:7,  lpv:6,  vendas:null },
+      { adset:"aberto", type:"video",    name:"AD02",                   adId:"120251543963010294", spend:39.23, leads:13, cpl:3.02, impressions:8895, linkClicks:153, lpv:110, vendas:null },
+      { adset:"aberto", type:"video",    name:"AD01",                   adId:"120251433318410294", spend:3.83,  leads:1,  cpl:3.83, impressions:1232, linkClicks:48, lpv:35, vendas:null },
+      { adset:"aberto", type:"estatico", name:"Estático 01 · Desafio",  adId:"120251548743180294", spend:2.45,  leads:1,  cpl:2.45, impressions:736,  linkClicks:7,  lpv:2,  vendas:null },
+      { adset:"aberto", type:"estatico", name:"Estático 02 · Rotina",   adId:"120251548776300294", spend:2.68,  leads:0,  cpl:null, impressions:524,  linkClicks:4,  lpv:2,  vendas:null }
+    ]
+  },
+  manual: {
+    // Fonte prevista: Sendflow (ainda não integrado — sem integração dependente da Suzy;
+    // mostra "pendente de integração"/"dados pendentes" até haver ligação real).
+    // Nota da Maria/Daniel (09/09): este é um lançamento meteórico, não um webinar — não
+    // existe "comparência"/pitch ao vivo, por isso esse conceito foi removido do dashboard.
+    whatsapp:    { source:"manual", fontePrevista:"Sendflow", available:false, members:null, updatedAt:null },
+    acquisition: { source:"manual", available:false, paidMeta:null, organico:null, outras:null, updatedAt:null },
+    // Funil de venda pedido pelo Daniel: Checkout Views, vendas da oferta principal e do
+    // downsell separadas; bloco "Dinheiro" com receita bruta/líquida, parte do coprodutor,
+    // CAC. Fonte prevista: Hotmart (ainda não integrado — sem integração dependente da
+    // Suzy; mostra "pendente de integração" até haver ligação real). Nada aqui foi
+    // preenchido, tudo fica null até haver dados reais.
+    sales: {
+      source:"manual", fontePrevista:"Hotmart", available:false,
+      checkoutViews:null,
+      vendas:null,            // vendas da oferta principal
+      vendasDownsell:null,
+      faturacaoBruta:null,    // receita bruta
+      faturacaoLiquida:null,  // receita líquida
+      coprodutorParte:null,   // parte do coprodutor
+      precoVenda:null,        // preço da oferta principal (para break-even)
+      custoPorVenda:null,     // custo variável por venda (para break-even)
+      updatedAt:null
+    }
+  },
+  // Leitura escrita do período — texto interpretativo, atualizado a cada revisão manual/rotina.
+  // Nunca é uma fonte de números; serve só para dar contexto humano ao que os dados acima mostram.
+  analysis: {
+    updatedAt: "2026-09-08T16:06:00+01:00",
+    leituraPeriodo: [
+      "Dia 1 de Captação: 75,84€ investidos (8,9% do budget de prospeção de 850€) já geraram 32 leads a 2,37€ de CPL, com a campanha e os 8 criativos todos ativos e a reportar SubmitApplication normalmente.",
+      "O Público Sinais está a converter a um custo mais baixo (1,63€) do que o Público Aberto (3,21€), e o criativo AD02 · Sinais lidera com 16 leads a 1,29€ — ainda é cedo para declarar vencedor, mas vale a pena acompanhar se o padrão se mantém no dia 2.",
+      "A meta de leads, o CPL alvo e os thresholds de semáforo desta fase vêm de benchmarks de lançamentos semelhantes (mesma área), não do histórico próprio do Pedro; ainda não foram inseridos, por isso a Visão Executiva mostra os KPIs sem comparação a objetivo por agora. As variações dia a dia ficam disponíveis a partir do dia 2.",
+      "Sem dados manuais (WhatsApp via Sendflow, aquisição, checkout/vendas via Hotmart) até ao momento; as secções dependentes destes dados mostram estado pendente, não zero.",
+      "Próximo passo: com mais 1-2 dias de histórico, passa a ser possível ler ritmo de investimento, CPL diário e a evolução por audiência com mais confiança."
+    ]
+  }
+};
+
+/* ---------------------------- helpers ---------------------------- */
+const fmtEUR = n => n==null ? "—" : "€" + n.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtEUR0 = n => n==null ? "—" : "€" + n.toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtInt = n => n==null ? "—" : n.toLocaleString('pt-PT');
+const fmtPct = (n,d=1) => n==null ? "—" : n.toLocaleString('pt-PT',{minimumFractionDigits:d, maximumFractionDigits:d}) + "%";
+const TZ = 'Europe/Lisbon';
+const fmtDate = iso => iso==null ? "—" : new Date(iso).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric', timeZone:TZ});
+const fmtDateTime = iso => iso==null ? "—" : new Date(iso).toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit', timeZone:TZ}) + "h";
+const fmtDayShort = iso => new Date(iso).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit', timeZone:TZ});
+// yyyy-mm-dd em Europe/Lisbon (para o filtro de datas) — robusto a UTC vs DST.
+function lisbonDateStr(d){
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(d);
+  const get = t => parts.find(p=>p.type===t).value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
+function pendingMini(lbl, note){ const c=el('div','mini pending'); c.innerHTML=`<div class="lbl">${lbl}</div><div class="val pending">${note||'Dados pendentes'}</div>`; return c; }
+
+/* ---------------------------- time / pacing ---------------------------- */
+const now = new Date();
+const cStart = new Date(DATA.config.campaignStart);
+const cEnd = new Date(DATA.config.captacaoEnd);
+const totalMs = cEnd - cStart;
+const elapsedMs = Math.min(Math.max(now - cStart, 0), totalMs);
+const elapsedFrac = elapsedMs / totalMs;
+const remainingMs = Math.max(cEnd - now, 0);
+const diasRestantes = Math.floor(remainingMs / 86400000);
+const diaAtual = Math.min(Math.floor(elapsedMs/86400000) + 1, Math.ceil(totalMs/86400000));
+const diasTotais = Math.ceil(totalMs/86400000);
+const nDaysRecorded = DATA.meta.daily.length;
+
+/* ---------------------------- header ---------------------------- */
+document.getElementById('periodPill').textContent = fmtDate(DATA.config.campaignStart) + " → " + fmtDate(DATA.config.captacaoEnd);
+const manualTimestamps = Object.values(DATA.manual).map(m=>m.updatedAt).filter(Boolean);
+const lastManualUpdate = manualTimestamps.length ? manualTimestamps.sort().slice(-1)[0] : null;
+const lastUpdateOverall = [DATA.meta.updatedAt, lastManualUpdate].filter(Boolean).sort().slice(-1)[0];
+document.getElementById('updMain').textContent = "Última atualização: " + fmtDateTime(lastUpdateOverall);
+document.getElementById('updMeta').textContent = fmtDateTime(DATA.meta.updatedAt);
+document.getElementById('updManual').textContent = lastManualUpdate ? fmtDateTime(lastManualUpdate) : "ainda sem dados manuais";
+
+/* ---------------------------- status banner ---------------------------- */
+(function statusBanner(){
+  const textEl = document.getElementById('statusText');
+  if (nDaysRecorded < 2){
+    textEl.textContent = "A campanha arrancou hoje (dia " + diaAtual + " de " + diasTotais + ") e já gerou " + DATA.meta.account.leads + " leads. Ainda não há volume suficiente (só 1 dia) para avaliar ritmo ou variações diárias; essa leitura fica disponível a partir de amanhã. A comparação com meta fica disponível assim que o benchmark de leads e CPL for definido, independentemente do número de dias.";
+  } else {
+    textEl.textContent = "Dia " + diaAtual + " de " + diasTotais + " de Captação. " + fmtInt(DATA.meta.account.leads) + " leads a " + fmtEUR(DATA.meta.account.cpl) + " de CPL médio.";
+  }
+})();
+
+/* ---------------------------- orçamento por fase ---------------------------- */
+(function phases(){
+  const grid = document.getElementById('phaseGrid');
+  const p = DATA.config.phases;
+  const order = ['distribuicao','captacao','antecipacao','remarketing'];
+  let totalBudgetDocumented = 0, totalGastoDocumented = 0, anyPending = false;
+
+  order.forEach(key=>{
+    const f = p[key];
+    const c = el('div','phase-card' + (!f.documented ? ' pending' : ''));
+    if (!f.documented){
+      anyPending = true;
+      c.innerHTML = `<h3>${f.label}</h3><div class="pending-pill">Dados pendentes</div><div class="phase-pacing">Budget e/ou datas desta fase ainda não estão documentados no plano.</div>`;
+      grid.appendChild(c);
+      return;
+    }
+    // gasto real: só temos consulta de spend automática para a fase de Captação (campanha principal).
+    // Para Remarketing, o gasto é 0€ confirmado (sem campanha de retargeting ativa na conta).
+    const gasto = key==='captacao' ? DATA.meta.account.spend : (key==='remarketing' ? 0 : null);
+    const pctExec = gasto!=null ? (gasto/f.budget*100) : null;
+    const restante = gasto!=null ? f.budget - gasto : null;
+    totalBudgetDocumented += f.budget;
+    if (gasto!=null) totalGastoDocumented += gasto;
+
+    let pctFaseDecorrida = null, pacingTxt = 'Datas da fase não documentadas para calcular % decorrida.';
+    if (f.start && f.end){
+      const fs = new Date(f.start), fe = new Date(f.end);
+      const ft = fe-fs; const fel = Math.min(Math.max(now-fs,0), ft);
+      pctFaseDecorrida = (fel/ft)*100;
+      pacingTxt = pctExec!=null ? `${fmtPct(pctExec,1)} do orçamento consumido com ${fmtPct(pctFaseDecorrida,1)} da fase decorrida.` : pacingTxt;
+    } else if (key==='remarketing'){
+      pacingTxt = 'Fase ainda não iniciada — sem campanha de retargeting ativa na conta.';
+    }
+
+    c.innerHTML = `
+      <h3>${f.label}</h3>
+      <div class="row"><span>Orçamentado</span><b>${fmtEUR0(f.budget)}</b></div>
+      <div class="row"><span>Gasto</span><b>${gasto!=null?fmtEUR(gasto):'—'}</b></div>
+      <div class="phase-bar-track"><div class="phase-bar-fill" style="width:${pctExec!=null?Math.min(pctExec,100):0}%"></div></div>
+      <div class="row"><span>% executado</span><b>${pctExec!=null?fmtPct(pctExec,1):'—'}</b></div>
+      <div class="row"><span>Restante</span><b>${restante!=null?fmtEUR(restante):'—'}</b></div>
+      <div class="phase-pacing">${pacingTxt}</div>`;
+    grid.appendChild(c);
+  });
+
+  const t = el('div','phase-card total');
+  t.innerHTML = `
+    <h3>Total</h3>
+    <div class="row"><span>Orçamentado</span><b>${fmtEUR0(totalBudgetDocumented)}</b></div>
+    <div class="row"><span>Gasto</span><b>${fmtEUR(totalGastoDocumented)}</b></div>
+    <div class="phase-bar-track"><div class="phase-bar-fill" style="width:${Math.min(totalGastoDocumented/totalBudgetDocumented*100,100)}%"></div></div>
+    <div class="row"><span>% executado</span><b>${fmtPct(totalGastoDocumented/totalBudgetDocumented*100,1)}</b></div>
+    <div class="row"><span>Restante</span><b>${fmtEUR(totalBudgetDocumented-totalGastoDocumented)}</b></div>
+    <div class="phase-pacing">${anyPending ? 'Só soma as fases com budget documentado (Captação + Remarketing) — Distribuição e Antecipação ficam de fora até terem budget definido.' : ''}</div>`;
+  grid.appendChild(t);
+})();
+
+/* ---------------------------- break-even ---------------------------- */
+(function breakeven(){
+  const grid = document.getElementById('breakevenGrid');
+  const s = DATA.manual.sales;
+  const items = [
+    ['Vendas necessárias (break-even)', null],
+    ['Vendas atuais', s.available ? fmtInt(s.vendas) : null],
+    ['Faltam', null],
+    ['ROAS', null]
+  ];
+  const haveFinancials = s.available && s.precoVenda!=null && s.custoPorVenda!=null;
+  if (!haveFinancials){
+    ['Vendas necessárias (break-even)','Vendas atuais','Faltam','ROAS'].forEach(lbl=>{
+      const c = el('div','card be-card');
+      c.innerHTML = `<div class="lbl">${lbl}</div><div class="val pending">Aguardando dados de vendas</div>`;
+      grid.appendChild(c);
+    });
+    return;
+  }
+  // (fórmula fica pronta para quando existirem preço de venda e custo por venda documentados)
+  const investTotal = DATA.meta.account.spend;
+  const breakEvenVendas = Math.ceil(investTotal / s.precoVenda);
+  const faltam = Math.max(breakEvenVendas - (s.vendas||0), 0);
+  const roas = investTotal>0 ? (s.faturacaoBruta||0)/investTotal : null;
+  [
+    ['Vendas necessárias (break-even)', fmtInt(breakEvenVendas)],
+    ['Vendas atuais', fmtInt(s.vendas)],
+    ['Faltam', fmtInt(faltam) + ' vendas'],
+    ['ROAS', roas!=null ? roas.toFixed(2)+'x' : '—']
+  ].forEach(([lbl,val])=>{
+    const c = el('div','card be-card');
+    c.innerHTML = `<div class="lbl">${lbl}</div><div class="val">${val}</div>`;
+    grid.appendChild(c);
+  });
+})();
+
+/* ---------------------------- visão executiva ---------------------------- */
+// Comparações dia-a-dia e vs média 7 dias usam sempre valores DO DIA (não o
+// acumulado da conta) dos dois lados — comparar o total acumulado da campanha
+// com o valor isolado de um único dia daria uma % sem sentido assim que
+// existir mais do que 1 dia de histórico. goodDirectionIsUp: true = subir é
+// bom, false = descer é bom, null = neutro (ex.: Investimento não tem
+// direção "boa" ou "má" só por variar).
+function variacaoLabel(curr, prev, goodDirectionIsUp, suffix){
+  suffix = suffix || 'vs dia anterior';
+  if (prev==null || curr==null) return {txt:'Em recolha (dia 1)', cls:'flat'};
+  const diff = curr - prev;
+  if (Math.abs(diff) < 1e-9) return {txt:'0,0% ' + suffix, cls:'flat'};
+  const pct = (diff/prev)*100;
+  const isUp = diff>0;
+  const cls = goodDirectionIsUp==null ? 'flat' : ((goodDirectionIsUp?isUp:!isUp) ? 'up' : 'down');
+  return { txt:(isUp?'+':'') + pct.toFixed(1) + '% ' + suffix, cls };
+}
+function mediaNDias(days, n){
+  const slice = days.slice(-n);
+  if (slice.length < n) return null; // só mostra média quando há histórico suficiente, nunca uma média parcial disfarçada de 7 dias
+  const sumSpend = slice.reduce((s,d)=>s+d.spend,0);
+  const sumLeads = slice.reduce((s,d)=>s+d.leads,0);
+  const allHaveLpv = slice.every(d=>d.lpv!=null);
+  const sumLpv = allHaveLpv ? slice.reduce((s,d)=>s+d.lpv,0) : null;
+  return {
+    spend: sumSpend/n, leads: sumLeads/n,
+    cpl: sumLeads>0 ? sumSpend/sumLeads : null,
+    txConvLpv: (allHaveLpv && sumLpv>0) ? sumLeads/sumLpv*100 : null
+  };
+}
+// Texto de meta usado quando o benchmark ainda não foi inserido. Nunca "sem histórico" —
+// a meta vem de benchmarks de lançamentos semelhantes, não do histórico próprio do Pedro.
+const METATXT_PENDENTE = 'A preencher (benchmark)';
+// Convertido em função nomeada (09/09/2026, filtro de datas) para poder ser chamada de
+// novo sempre que o filtro muda, sem duplicar a lógica. Sem argumento (scope===undefined),
+// comporta-se exatamente como antes: usa DATA.meta.account tal como sempre usou. Com
+// `scope` (objeto calculado a partir de DATA.meta.daily para um intervalo), usa
+// scope.account em vez disso. "vs dia anterior"/"vs média 7 dias" continuam sempre a
+// comparar sobre o histórico diário completo (DATA.meta.daily), independentemente do
+// filtro selecionado — não faz sentido redefinir "dia anterior" a partir de um intervalo
+// arbitrário escolhido pelo utilizador.
+function renderExecKpis(scope){
+  const grid = document.getElementById('execGrid');
+  grid.innerHTML = '';
+  const a = scope ? scope.account : DATA.meta.account;
+  const d = DATA.meta.daily;
+  const todayRec = d.length ? d[d.length-1] : null;
+  const prevDay = d.length>1 ? d[d.length-2] : null;
+  const todayCpl = todayRec && todayRec.leads>0 ? todayRec.spend/todayRec.leads : null;
+  const prevCpl = prevDay && prevDay.leads>0 ? prevDay.spend/prevDay.leads : null;
+  const todayTxConvLpv = (todayRec && todayRec.lpv!=null && todayRec.lpv>0) ? todayRec.leads/todayRec.lpv*100 : null;
+  const prevTxConvLpv = (prevDay && prevDay.lpv!=null && prevDay.lpv>0) ? prevDay.leads/prevDay.lpv*100 : null;
+  const m7 = mediaNDias(d, 7);
+  const txConvLPV = a.lpv>0 ? (a.leads/a.lpv*100) : null;
+
+  const kpis = [
+    { lbl:'Investimento', val:fmtEUR(a.spend), metaTxt: DATA.config.targets.documented ? '—' : METATXT_PENDENTE, gap:'—',
+      varDia: variacaoLabel(todayRec?.spend, prevDay?.spend, null),
+      varM7: m7 ? variacaoLabel(todayRec?.spend, m7.spend, null, 'vs média 7 dias') : null },
+    { lbl:'Leads (SubmitApplication)', val:fmtInt(a.leads), metaTxt: DATA.config.targets.leadsGoal!=null ? fmtInt(DATA.config.targets.leadsGoal) : METATXT_PENDENTE, gap: DATA.config.targets.leadsGoal!=null ? fmtInt(DATA.config.targets.leadsGoal-a.leads)+' para a meta' : '—',
+      varDia: variacaoLabel(todayRec?.leads, prevDay?.leads, true),
+      varM7: m7 ? variacaoLabel(todayRec?.leads, m7.leads, true, 'vs média 7 dias') : null },
+    { lbl:'CPL', val:fmtEUR(a.cpl), metaTxt: DATA.config.targets.cplTarget!=null ? fmtEUR(DATA.config.targets.cplTarget) : METATXT_PENDENTE, gap: DATA.config.targets.cplTarget!=null ? fmtEUR(a.cpl-DATA.config.targets.cplTarget)+' vs meta' : '—',
+      varDia: variacaoLabel(todayCpl, prevCpl, false),
+      varM7: m7 ? variacaoLabel(todayCpl, m7.cpl, false, 'vs média 7 dias') : null },
+    // KPI pedido pela Maria/Daniel para ficar claramente visível: Taxa de Conversão da
+    // Página (LPV → Lead). Sem benchmark pedido para esta métrica (só Leads/CPL/projeção
+    // usam benchmark), por isso meta/gap ficam "—" em vez de "a preencher".
+    { lbl:'Taxa de Conversão da Página (LPV → Lead)', val:fmtPct(txConvLPV), metaTxt:'—', gap:'—',
+      varDia: variacaoLabel(todayTxConvLpv, prevTxConvLpv, true),
+      varM7: (m7 && m7.txConvLpv!=null) ? variacaoLabel(todayTxConvLpv, m7.txConvLpv, true, 'vs média 7 dias') : null }
+  ];
+
+  kpis.forEach(k=>{
+    const c = el('div','kpi');
+    const semaforoCls = DATA.config.thresholds.documented ? (k.varDia.cls==='up'?'good':(k.varDia.cls==='down'?'critical':'')) : '';
+    c.innerHTML = `
+      <div class="kpi-top">
+        <div class="lbl">${k.lbl}</div>
+        <div class="semaforo ${semaforoCls}" title="${DATA.config.thresholds.documented ? 'Semáforo ativo' : 'Sem threshold definido'}"></div>
+      </div>
+      <div class="val num">${k.val}</div>
+      <div class="kpi-meta-row">
+        <div class="r"><span>Meta (benchmark)</span><b>${k.metaTxt}</b></div>
+        <div class="r"><span>Gap</span><b>${k.gap}</b></div>
+        <div class="r"><span>vs dia anterior</span><b class="${k.varDia.cls}">${k.varDia.txt}</b></div>
+        <div class="r"><span>vs média 7 dias</span><b class="${k.varM7 ? k.varM7.cls : 'flat'}">${k.varM7 ? k.varM7.txt : 'Em recolha (mín. 7 dias)'}</b></div>
+      </div>`;
+    grid.appendChild(c);
+  });
+}
+renderExecKpis();
+
+/* ---------------------------- projeção ---------------------------- */
+(function projection(){
+  const box = document.getElementById('projectionBox');
+  const a = DATA.meta.account;
+  if (nDaysRecorded < 2 || !DATA.config.targets.documented || DATA.config.targets.leadsGoal==null){
+    box.innerHTML = `<span class="eyebrow">Projeção</span><br><br>` +
+      (nDaysRecorded < 2
+        ? `Ainda só há 1 dia de dados; a projeção de leads até ao fim da fase fica disponível a partir do dia 2, quando houver um ritmo diário para extrapolar.`
+        : `A meta de leads desta fase vem de um benchmark de lançamentos semelhantes (mesma área), ainda por inserir; não depende de teres mais histórico do Pedro. Assim que o Daniel definir esse número, esta secção passa a mostrar a projeção completa.`);
+    return;
+  }
+  const ritmoAtual = a.leads / nDaysRecorded;
+  const projecaoFinal = Math.round(ritmoAtual * diasTotais);
+  const necessarioPorDia = (DATA.config.targets.leadsGoal - a.leads) / Math.max(diasRestantes,1);
+  box.innerHTML = `<span class="eyebrow">Projeção</span><br><br>
+    A este ritmo, projeção de <b>${fmtInt(projecaoFinal)}</b> leads até ao fim. Meta: <b>${fmtInt(DATA.config.targets.leadsGoal)}</b>.
+    São necessários <b>${necessarioPorDia.toFixed(1)}</b> leads/dia para atingir a meta vs <b>${ritmoAtual.toFixed(1)}</b> leads/dia atuais.`;
+})();
+
+/* ---------------------------- gráficos ---------------------------- */
+// Cor de fundo (subtil) por fase — só usada para fases documentadas (com
+// budget/datas), para marcar visualmente em que fase do plano cada dia caiu.
+const phaseBandColor = { distribuicao:'var(--warning-soft)', captacao:'var(--teal-soft)', antecipacao:'var(--good-soft)', remarketing:'var(--blue-soft)' };
+function phaseForDate(dateStr){
+  const day = new Date(dateStr + 'T12:00:00+01:00'); // meio-dia, para não cair na fronteira de um dia por causa de fuso
+  for (const key of ['distribuicao','captacao','antecipacao','remarketing']){
+    const f = DATA.config.phases[key];
+    if (!f.documented || !f.start || !f.end) continue;
+    if (day >= new Date(f.start) && day <= new Date(f.end)) return { key, label:f.label, color:phaseBandColor[key] };
+  }
+  return null;
+}
+function multiLineChart(container, days, series, opts){
+  // Pontos com valor null (ex.: CPL num dia sem leads) quebram a linha em vez de
+  // serem desenhados como zero — nunca mostrar CPL=0 quando não há leads nesse dia.
+  opts = opts || {};
+  const w = 500, h = 190, padL = 36, padR = 10, padT = 14, padB = 24;
+  const plotW = w-padL-padR, plotH = h-padT-padB;
+  const n = days.length;
+  const x = i => padL + (n>1 ? (plotW/(n-1))*i : plotW/2);
+  const allVals = series.flatMap(s=>days.map(d=>d[s.key])).filter(v=>v!=null);
+  const maxV = Math.max(...allVals, 1) * 1.15;
+  const y = v => padT + plotH - (v/maxV)*plotH;
+  let bandRects = '';
+  const bandsSeen = new Set();
+  if (opts.phaseBands){
+    const step = n>1 ? plotW/(n-1) : plotW;
+    const half = step/2;
+    days.forEach((d,i)=>{
+      const ph = opts.phaseBands(d.date);
+      if (!ph) return;
+      bandsSeen.add(ph.label);
+      const bx = Math.max(padL, x(i)-half);
+      const bw = Math.min(padL+plotW, x(i)+half) - bx;
+      bandRects += `<rect x="${bx}" y="${padT}" width="${bw}" height="${plotH}" fill="${ph.color}"/>`;
+    });
+  }
+  let gridLines='';
+  for(let g=0; g<=3; g++){ const gy=padT+plotH-(g/3)*plotH; gridLines += `<line class="grid-line" x1="${padL}" y1="${gy}" x2="${w-padR}" y2="${gy}"/>`; }
+  let labels=''; days.forEach((d,i)=>{ labels += `<text class="axis-lbl" x="${x(i)}" y="${h-6}" text-anchor="middle">${fmtDayShort(d.date)}</text>`; });
+  let lines='';
+  series.forEach(s=>{
+    let segment = [];
+    const flushSegment = () => {
+      if (segment.length){
+        lines += `<polyline points="${segment.join(' ')}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+        segment = [];
+      }
+    };
+    days.forEach((d,i)=>{
+      const v = d[s.key];
+      if (v==null){ flushSegment(); return; }
+      segment.push(`${x(i)},${y(v)}`);
+      lines += `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${s.color}" stroke="var(--surface)" stroke-width="1.4"/>`;
+    });
+    flushSegment();
+  });
+  container.innerHTML = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;overflow:visible" role="img">${bandRects}${gridLines}${labels}${lines}</svg>`;
+  if (opts.bandNoteEl) opts.bandNoteEl.textContent = bandsSeen.size ? 'Fundo marca a fase do plano: ' + [...bandsSeen].join(', ') + '.' : '';
+}
+(function dailyCharts(){
+  const days = DATA.meta.daily;
+  let accSpend=0, accLeads=0;
+  const volDays = days.map(d=>{ accSpend+=d.spend; accLeads+=d.leads; return {...d, spendAcum:accSpend, leadsAcum:accLeads}; });
+  document.getElementById('chartNoteVolume').textContent = nDaysRecorded < 3 ? "Ainda com poucos dias registados — a leitura de volume acumulado fica mais clara com mais histórico." : "Investimento acumulado e leads acumuladas por dia.";
+  multiLineChart(document.getElementById('chartVolume'), volDays, [
+    { key:'spendAcum', color:'var(--teal)' }, { key:'leadsAcum', color:'var(--blue)' }
+  ], { phaseBands: phaseForDate, bandNoteEl: document.getElementById('chartBandNoteVolume') });
+
+  document.getElementById('chartNoteEficiencia').textContent = nDaysRecorded < 3 ? "Ainda com poucos dias registados — a evolução de eficiência fica mais fiável com mais volume." : "CPL, CPM, CTR link e taxa de conversão LPV, por dia.";
+  // txConvLpv só existe nos dias em que a rotina horária também capturou LPV diário
+  // (ver nota em DATA.meta.daily) — nos restantes fica null e a linha simplesmente
+  // não é desenhada nesse troço, nunca como 0%.
+  const effDays = days.map(d=>({...d, cplDia: d.leads>0 ? d.spend/d.leads : null, txConvLpv: (d.lpv!=null && d.lpv>0) ? (d.leads/d.lpv)*100 : null}));
+  multiLineChart(document.getElementById('chartEficiencia'), effDays, [
+    { key:'cplDia', color:'var(--teal)' }, { key:'cpm', color:'var(--warning)' }, { key:'ctrLink', color:'var(--blue)' }, { key:'txConvLpv', color:'var(--good)' }
+  ], { phaseBands: phaseForDate, bandNoteEl: document.getElementById('chartBandNoteEficiencia') });
+})();
+
+/* ---------------------------- meta ads detalhado ---------------------------- */
+// Convertido em função nomeada (09/09/2026, filtro de datas) — mesmo padrão de
+// renderExecKpis: sem scope usa DATA.meta.account tal como sempre usou.
+function renderMetaDetail(scope){
+  const a = scope ? scope.account : DATA.meta.account;
+  const grid = document.getElementById('metaDetailGrid');
+  grid.innerHTML = '';
+  const txCliqueVP = a.linkClicks>0 ? (a.lpv/a.linkClicks)*100 : null;
+  const txConvLPC = a.linkClicks>0 ? (a.leads/a.linkClicks)*100 : null;
+  const txConvLPV = a.lpv>0 ? (a.leads/a.lpv)*100 : null;
+  const items = [
+    ['Alcance', fmtInt(a.reach)], ['Impressões', fmtInt(a.impressions)],
+    ['Cliques Tudo', fmtInt(a.clicksAll)], ['Cliques Link', fmtInt(a.linkClicks)],
+    ['LPV', fmtInt(a.lpv)], ['Leads', fmtInt(a.leads)],
+    [null,null], // Compras — pendente
+    ['CPL', fmtEUR(a.cpl)], [null,null], // Custo por Compra — pendente
+    ['CPC Link', fmtEUR(a.cpcLink)], ['CTR Tudo', fmtPct(a.ctrAll)],
+    ['CTR Link', fmtPct(a.ctrLink)], ['CPM', fmtEUR(a.cpm)],
+    ['Frequência', a.frequency!=null ? a.frequency.toFixed(2) : '—'],
+    ['Tx Clique → VP', fmtPct(txCliqueVP)], ['Tx Conv. LPC', fmtPct(txConvLPC)],
+    ['Tx Conv. LPV', fmtPct(txConvLPV)]
+  ];
+  const pendingLabels = {6:'Compras', 8:'Custo por Compra'};
+  items.forEach(([lbl,val], idx)=>{
+    if (lbl===null){
+      grid.appendChild(pendingMini(pendingLabels[idx], 'Sem evento de compra ativo na Fase 1'));
+      return;
+    }
+    const c = el('div','mini'); c.innerHTML = `<div class="lbl">${lbl}</div><div class="val num">${val}</div>`;
+    grid.appendChild(c);
+  });
+}
+renderMetaDetail();
+
+/* ---------------------------- audiências ---------------------------- */
+// Convertido em função nomeada (09/09/2026, filtro de datas) — mesmo padrão de
+// renderExecKpis: sem scope usa DATA.meta.audiences tal como sempre usou.
+function renderAudiences(scope){
+  const grid = document.getElementById('audGrid');
+  grid.innerHTML = '';
+  const auds = scope ? scope.audiences : DATA.meta.audiences;
+  const totalSpend = auds.reduce((s,a)=>s+(a.spend||0),0);
+  auds.forEach(a=>{
+    const share = (totalSpend>0 && a.spend!=null) ? (a.spend/totalSpend*100).toFixed(0)+'% do investimento' : 'Sem dados neste intervalo';
+    const lpvToLead = (a.lpv!=null && a.lpv>0) ? (a.leads/a.lpv*100) : null;
+    const c = el('div','card aud-card'); c.style.setProperty('--aud-color', a.color);
+    c.innerHTML = `
+      <div class="aud-head"><span class="aud-dot"></span><h3>${a.emoji} ${a.label}</h3><span class="share">${share}</span></div>
+      <div class="aud-rows">
+        <div class="r hero"><span class="l">Leads</span><span class="v">${fmtInt(a.leads)}</span></div>
+        <div class="r hero"><span class="l">CPL</span><span class="v">${fmtEUR(a.cpl)}</span></div>
+        <div class="r"><span class="l">Investimento</span><span class="v">${fmtEUR(a.spend)}</span></div>
+        <div class="r"><span class="l">Taxa LPV → Lead</span><span class="v">${fmtPct(lpvToLead)}</span></div>
+        <div class="r"><span class="l">CTR (link)</span><span class="v">${fmtPct(a.ctr)}</span></div>
+        <div class="r"><span class="l">CPC (link)</span><span class="v">${fmtEUR(a.cpc)}</span></div>
+        <div class="r"><span class="l">Landing Page Views</span><span class="v">${fmtInt(a.lpv)}</span></div>
+        <div class="r"><span class="l">Reach</span><span class="v">${fmtInt(a.reach)}</span></div>
+      </div>`;
+    grid.appendChild(c);
+  });
+}
+renderAudiences();
+
+/* ---------------------------- criativos ---------------------------- */
+// Agrega o mesmo conceito criativo entre ad sets (ex.: AD02 em Sinais + AD02 em Aberto
+// = 1 card com total e breakdown por audiência) em vez de 2 cards principais com o
+// mesmo nome só porque são instâncias em públicos diferentes.
+// Convertido em função nomeada (09/09/2026, filtro de datas) — mesmo padrão de
+// renderExecKpis: sem scope usa DATA.meta.creatives tal como sempre usou.
+function renderCreatives(scope){
+  const grid = document.getElementById('creativeGrid');
+  grid.innerHTML = '';
+  const source = scope ? scope.creatives : DATA.meta.creatives;
+  const byName = {};
+  source.forEach(r=>{
+    if (!byName[r.name]) byName[r.name] = { name:r.name, type:r.type, breakdown:[] };
+    byName[r.name].breakdown.push(r);
+  });
+  const groups = Object.values(byName).map(g=>{
+    const t = g.breakdown.reduce((acc,r)=>({
+      spend: acc.spend+(r.spend||0), impressions: acc.impressions+(r.impressions||0),
+      linkClicks: acc.linkClicks+(r.linkClicks||0), lpv: acc.lpv+(r.lpv||0), leads: acc.leads+(r.leads||0)
+    }), {spend:0, impressions:0, linkClicks:0, lpv:0, leads:0});
+    // Sem filtro (scope indefinido) os registos de origem nunca têm spend===null, por
+    // isso este guard só entra em jogo com um intervalo de datas sem dados: em vez de
+    // mostrar €0,00 como se fosse um total real, mostra "—" (nunca zero fabricado).
+    if (g.breakdown.every(r=>r.spend==null)){
+      t.spend=null; t.impressions=null; t.linkClicks=null; t.lpv=null; t.leads=null;
+    }
+    t.cpl = t.leads>0 ? t.spend/t.leads : null;
+    g.breakdown.sort((x,y)=> (x.adset==='sinais'?0:1) - (y.adset==='sinais'?0:1));
+    return { ...g, total:t };
+  }).sort((a,b)=>{ if ((b.total.leads??-1)!==(a.total.leads??-1)) return (b.total.leads??-1)-(a.total.leads??-1); return (a.total.cpl??1e9)-(b.total.cpl??1e9); });
+
+  groups.forEach(g=>{
+    const bdHtml = g.breakdown.map(r=>`
+      <div class="bd-row">
+        <span class="aud-chip ${r.adset}">${r.adset==='sinais'?'🟡 Sinais':'🔵 Aberto'}</span>
+        <span class="nums">${fmtEUR(r.spend)} · ${fmtInt(r.leads)} leads · CPL ${r.cpl!=null?fmtEUR(r.cpl):'—'}</span>
+      </div>`).join('');
+    const c = el('div','card creative-card');
+    c.innerHTML = `
+      <div class="creative-thumb"><span class="pending-pill">Integração pendente</span></div>
+      <div class="creative-body">
+        <div class="creative-name-row">
+          <span class="name">${g.name}</span>
+          <span class="type-badge ${g.type==='video'?'video':'estatico'}">${g.type==='video'?'Vídeo':'Estático'}</span>
+        </div>
+        <div class="eyebrow" style="font-size:9.5px;">Total (Sinais + Aberto)</div>
+        <div class="creative-funnel">Impr. <b>${fmtInt(g.total.impressions)}</b> → Cliques <b>${fmtInt(g.total.linkClicks)}</b> → LPV <b>${fmtInt(g.total.lpv)}</b> → Leads <b>${fmtInt(g.total.leads)}</b> → CPL <b>${g.total.cpl!=null?fmtEUR(g.total.cpl):'—'}</b> → Vendas <b class="pending-pill" style="font-size:9px;">Integração pendente</b></div>
+        <div class="creative-breakdown">${bdHtml}</div>
+        <div class="creative-stats">
+          <div class="s"><span class="l">Spend total</span><span class="v">${fmtEUR(g.total.spend)}</span></div>
+          <div class="s"><span class="l">Link do anúncio</span><span class="v creative-link"><span class="pending-pill">Integração pendente</span></span></div>
+        </div>
+      </div>`;
+    grid.appendChild(c);
+  });
+}
+renderCreatives();
+
+/* ---------------------------- pago vs orgânico ---------------------------- */
+(function acquisition(){
+  const box = document.getElementById('acquisitionBox');
+  const m = DATA.manual.acquisition;
+  box.innerHTML = m.available ? '' : `<div class="card locked">
+    <div class="icon">◐</div><h3>Dados ainda não disponíveis</h3>
+    <p>Depende de acesso ao GHL (ainda não ligado) ou de contagem manual. As UTMs já estão corretamente configuradas em todos os anúncios.</p>
+  </div>`;
+})();
+
+/* ---------------------------- quente vs frio (temperatura de audiência) ---------------------------- */
+// Correção do Daniel: Sinais e Aberto são ambos prospeção FRIA nesta Fase 1 (Sinais usa
+// sinais/sugestões de audiência, mas isso não o torna quente). Só existe audiência QUENTE
+// quando entrar Retargeting — a partir daí, uma entrada com key:"retargeting" em
+// DATA.meta.audiences ativa automaticamente o card Quente aqui, sem precisar de mexer
+// nesta função outra vez.
+(function temperature(){
+  const box = document.getElementById('temperatureBox');
+  const auds = DATA.meta.audiences;
+  const frioAuds = auds.filter(a=>a.key!=='retargeting');
+  const quenteAuds = auds.filter(a=>a.key==='retargeting');
+  const sum = (list,field) => list.reduce((s,a)=>s+a[field],0);
+  const totalSpend = sum(auds,'spend');
+
+  const frio = { spend: sum(frioAuds,'spend'), leads: sum(frioAuds,'leads') };
+  frio.cpl = frio.leads>0 ? frio.spend/frio.leads : null;
+  const frioShare = totalSpend>0 ? frio.spend/totalSpend*100 : null;
+  const composicaoFrio = frioAuds.map(a=>a.label).join(' + ') || '—';
+
+  let html = '<div class="aud-grid">';
+  html += `
+    <div class="card aud-card" style="--aud-color:var(--blue)">
+      <div class="aud-head"><span class="aud-dot"></span><h3>Frio</h3><span class="share">${frioShare!=null?fmtPct(frioShare,0):'—'} do investimento</span></div>
+      <div class="aud-rows">
+        <div class="r hero"><span class="l">Leads</span><span class="v">${fmtInt(frio.leads)}</span></div>
+        <div class="r hero"><span class="l">CPL</span><span class="v">${fmtEUR(frio.cpl)}</span></div>
+        <div class="r"><span class="l">Investimento</span><span class="v">${fmtEUR(frio.spend)}</span></div>
+        <div class="r"><span class="l">Composição</span><span class="v" style="font-size:12.5px;">${composicaoFrio}</span></div>
+      </div>
+      <div style="padding:0 17px 15px;font-size:10.5px;color:var(--ink-3);line-height:1.45;">Prospeção fria — Sinais usa sinais/sugestões de audiência da conta, Aberto é público amplo (broad); nenhuma das duas é audiência quente nesta fase.</div>
+    </div>`;
+
+  if (quenteAuds.length){
+    const q = { spend: sum(quenteAuds,'spend'), leads: sum(quenteAuds,'leads') };
+    q.cpl = q.leads>0 ? q.spend/q.leads : null;
+    const qShare = totalSpend>0 ? q.spend/totalSpend*100 : null;
+    html += `
+      <div class="card aud-card" style="--aud-color:var(--warning)">
+        <div class="aud-head"><span class="aud-dot"></span><h3>Quente</h3><span class="share">${fmtPct(qShare,0)} do investimento</span></div>
+        <div class="aud-rows">
+          <div class="r hero"><span class="l">Leads</span><span class="v">${fmtInt(q.leads)}</span></div>
+          <div class="r hero"><span class="l">CPL</span><span class="v">${fmtEUR(q.cpl)}</span></div>
+          <div class="r"><span class="l">Investimento</span><span class="v">${fmtEUR(q.spend)}</span></div>
+          <div class="r"><span class="l">Composição</span><span class="v" style="font-size:12.5px;">Retargeting</span></div>
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <div class="card locked">
+        <div class="icon">◐</div><h3>Quente — Ainda não ativo</h3>
+        <p>Só existe público quente quando o Retargeting arrancar (visitantes do site, engagers IG/FB, visualizadores de vídeo, listas próprias). Por agora, 100% do investimento está classificado como frio.</p>
+      </div>`;
+  }
+  html += '</div>';
+  box.innerHTML = html;
+})();
+
+/* ---------------------------- whatsapp ---------------------------- */
+// Nota da Maria/Daniel (09/09): lançamento meteórico, não webinar — não existe
+// "comparência"/pitch ao vivo, por isso essas métricas foram removidas desta secção
+// (e do funil, mais abaixo). Fica só o que faz sentido para este formato de lançamento.
+(function whatsapp(){
+  const box = document.getElementById('whatsappBox');
+  const leadsTotais = DATA.meta.account.leads; // real, sempre disponível
+  const w = DATA.manual.whatsapp;
+  const txLeadWpp = w.available ? (w.members/leadsTotais*100) : null;
+
+  let html = '<div class="sec-grid-3">';
+  const card = (lbl,val) => `<div class="mini"><div class="lbl">${lbl}</div><div class="val num">${val}</div></div>`;
+  html += card('Leads totais', fmtInt(leadsTotais));
+  html += w.available ? card('Entraram no WhatsApp', fmtInt(w.members)) : pendingMini('Entraram no WhatsApp', 'Pendente de integração (Sendflow)').outerHTML;
+  html += txLeadWpp!=null ? card('Taxa Lead → WhatsApp', fmtPct(txLeadWpp)) : pendingMini('Taxa Lead → WhatsApp', 'Pendente de integração (Sendflow)').outerHTML;
+  html += '</div>';
+  box.innerHTML = html;
+})();
+
+/* ---------------------------- funil de venda ---------------------------- */
+// Funil pedido pelo Daniel: LPV → Leads → WhatsApp → Checkout Views → Vendas (oferta
+// principal) → Downsell, com taxa de conversão entre cada par de etapas sempre que ambos
+// os valores existirem. Sem etapa de "Compareceram/Pitch" — não se aplica a este formato
+// de lançamento (ver nota acima).
+(function funnel(){
+  const a = DATA.meta.account;
+  const box = document.getElementById('funnelBox');
+  const w = DATA.manual.whatsapp, s = DATA.manual.sales;
+  const stages = [
+    { name:'LPV',                       sub:'Landing Page View · Meta Ads', value:a.lpv,   available:true,  fonte:'Fonte: Meta Ads' },
+    { name:'Leads',                     sub:'SubmitApplication · Meta Ads', value:a.leads, available:true,  fonte:'Fonte: Meta Ads' },
+    { name:'WhatsApp',                  sub:'Atualização manual · Sendflow', value:w.members,          available:w.available,  fonte:'Fonte: manual (Sendflow)' },
+    { name:'Checkout Views',            sub:'Atualização manual · Hotmart',  value:s.checkoutViews,    available:s.available && s.checkoutViews!=null, fonte:'Fonte: manual (Hotmart)' },
+    { name:'Vendas · oferta principal', sub:'Atualização manual · Hotmart',  value:s.vendas,           available:s.available && s.vendas!=null,        fonte:'Fonte: manual (Hotmart)' },
+    { name:'Downsell',                  sub:'Atualização manual · Hotmart',  value:s.vendasDownsell,   available:s.available && s.vendasDownsell!=null,fonte:'Fonte: manual (Hotmart)' }
+  ];
+  const maxV = stages[0].value; // LPV é o topo do funil
+  let html = '';
+  stages.forEach((st,i)=>{
+    const pending = !st.available;
+    html += `
+      <div class="funnel-stage">
+        <div class="name">${st.name}<small>${st.sub}</small></div>
+        <div class="funnel-bar-track"><div class="funnel-bar-fill${pending?' pending':''}" style="width:${pending?100:Math.max((st.value/maxV)*100,6)}%"></div></div>
+        <div class="amount">${pending?'—':fmtInt(st.value)}<small>${pending?'Dados ainda não disponíveis':st.fonte}</small></div>
+      </div>`;
+    if (i>0){
+      const prev = stages[i-1];
+      const rateTxt = (prev.available && st.available && prev.value>0) ? fmtPct(st.value/prev.value*100) : '—';
+      html += `<div class="funnel-rate">Taxa ${prev.name} → ${st.name}: <b>${rateTxt}</b></div>`;
+    }
+  });
+  box.innerHTML = html;
+})();
+
+/* ---------------------------- dinheiro ---------------------------- */
+(function money(){
+  const box = document.getElementById('moneyBox');
+  const s = DATA.manual.sales;
+  const investimento = DATA.meta.account.spend; // real, sempre disponível — não depende de dados manuais
+  const roasBruto = s.faturacaoBruta!=null && investimento>0 ? s.faturacaoBruta/investimento : null;
+  const roasLiquido = s.faturacaoLiquida!=null && investimento>0 ? s.faturacaoLiquida/investimento : null;
+  const cac = (s.vendas!=null && s.vendas>0) ? investimento/s.vendas : null;
+  const breakEvenVendas = s.precoVenda!=null ? Math.ceil(investimento/s.precoVenda) : null;
+  const items = [
+    ['Receita bruta', s.faturacaoBruta!=null ? fmtEUR(s.faturacaoBruta) : null],
+    ['Receita líquida', s.faturacaoLiquida!=null ? fmtEUR(s.faturacaoLiquida) : null],
+    ['Parte coprodutor', s.coprodutorParte!=null ? fmtEUR(s.coprodutorParte) : null],
+    ['Investimento em publicidade', fmtEUR(investimento)],
+    ['ROAS bruto', roasBruto!=null ? roasBruto.toFixed(2)+'x' : null],
+    ['ROAS líquido', roasLiquido!=null ? roasLiquido.toFixed(2)+'x' : null],
+    ['CAC', cac!=null ? fmtEUR(cac) : null],
+    ['Break-even (vendas necessárias)', breakEvenVendas!=null ? fmtInt(breakEvenVendas)+' vendas' : null]
+  ];
+  let html = '';
+  items.forEach(([lbl,val])=>{
+    if (val==null){ html += pendingMini(lbl, lbl==='Investimento em publicidade' ? null : 'Aguardando dados de vendas').outerHTML; return; }
+    html += `<div class="mini"><div class="lbl">${lbl}</div><div class="val num">${val}</div></div>`;
+  });
+  box.innerHTML = html;
+})();
+
+/* ---------------------------- leitura do período ---------------------------- */
+(function leitura(){
+  document.getElementById('leituraBox').innerHTML = '<ul>' + DATA.analysis.leituraPeriodo.map(l=>`<li>${l}</li>`).join('') + '</ul>';
+})();
+
+/* ---------------------------- nota meta vs ghl ---------------------------- */
+(function ghlNote(){
+  document.getElementById('ghlNote').innerHTML = `<b>Meta Ads vs GHL.</b> O Meta Ads reporta conversões atribuídas ao pixel (SubmitApplication), que podem incluir atribuição por clique/visualização dentro da janela definida na conta. O GHL, quando ligado, reporta registos efetivos no CRM. Podem existir pequenas discrepâncias entre os dois — isso é normal e não indica erro de tracking. Quando o GHL estiver disponível, passa a ser a fonte de verdade operacional para contagem de leads; até lá, os números acima vêm exclusivamente do Meta Ads.`;
+})();
+
+/* ---------------------------- rodapé ---------------------------- */
+document.getElementById('footLine').textContent = "Outlier Agency · dados até " + fmtDate(DATA.meta.updatedAt) + " · atualizado a " + fmtDateTime(DATA.meta.updatedAt);
+
+/* ---------------------------- filtro de datas ---------------------------- */
+// Novo (09/09/2026). Filtra só Visão executiva, Meta Ads detalhado, Performance por
+// audiência e Criativos — nenhuma outra secção (gráficos, funil, dinheiro, quente/frio,
+// orçamento por fase, break-even, projeção, leitura do período) responde a este filtro.
+// Sem filtro ativo (default "Período todo"), estas 4 secções continuam a usar
+// DATA.meta.account / DATA.meta.audiences / DATA.meta.creatives tal como sempre usaram —
+// comportamento inalterado. Com um intervalo selecionado, somam/recalculam a partir de
+// DATA.meta.daily[].account/.audiences/.creatives, só para os dias desse intervalo.
+// "vs dia anterior" / "vs média 7 dias" nos KPIs mantêm-se sempre sobre o histórico
+// completo (ver nota em renderExecKpis) — não são afetados pelo filtro.
+function daysInRange(start, end){
+  return DATA.meta.daily.filter(d => d.date >= start && d.date <= end);
+}
+function buildAccountScope(days){
+  if (!days.length) return { spend:null, leads:null, cpl:null, reach:null, impressions:null, clicksAll:null, ctrAll:null, linkClicks:null, ctrLink:null, cpcLink:null, cpm:null, frequency:null, lpv:null, cpLpv:null, purchases:null, costPerPurchase:null };
+  const sum = key => days.reduce((s,d)=> s + (d[key]||0), 0);
+  const spend = sum('spend'), leads = sum('leads');
+  const impressions = sum('impressions'), clicksAll = sum('clicksAll'), linkClicks = sum('linkClicks');
+  const reach = sum('reach'); // aproximado em intervalos >1 dia — ver nota em applyDateFilter
+  const allLpv = days.every(d=>d.lpv!=null);
+  const lpv = allLpv ? sum('lpv') : null;
+  return {
+    spend, leads, cpl: leads>0 ? spend/leads : null,
+    reach, impressions, clicksAll,
+    ctrAll: impressions>0 ? clicksAll/impressions*100 : null,
+    linkClicks, ctrLink: impressions>0 ? linkClicks/impressions*100 : null,
+    cpcLink: linkClicks>0 ? spend/linkClicks : null,
+    cpm: impressions>0 ? spend/impressions*1000 : null,
+    frequency: reach>0 ? impressions/reach : null,
+    lpv, cpLpv: (lpv!=null && lpv>0) ? spend/lpv : null,
+    purchases:null, costPerPurchase:null
+  };
+}
+function buildAudiencesScope(days){
+  return DATA.meta.audiences.map(base=>{
+    const recs = days.map(d => (d.audiences||[]).find(a=>a.key===base.key)).filter(Boolean);
+    if (!recs.length) return { ...base, spend:null, leads:null, cpl:null, ctr:null, cpc:null, cpm:null, reach:null, frequency:null, lpv:null };
+    const spend = recs.reduce((s,r)=>s+r.spend,0);
+    const leads = recs.reduce((s,r)=>s+r.leads,0);
+    const impressions = recs.reduce((s,r)=>s+(r.impressions||0),0);
+    const linkClicks = recs.reduce((s,r)=>s+(r.linkClicks||0),0);
+    const reach = recs.reduce((s,r)=>s+(r.reach||0),0);
+    const allLpv = recs.every(r=>r.lpv!=null);
+    const lpv = allLpv ? recs.reduce((s,r)=>s+r.lpv,0) : null;
+    return {
+      ...base, spend, leads, cpl: leads>0 ? spend/leads : null,
+      ctr: impressions>0 ? linkClicks/impressions*100 : null,
+      cpc: linkClicks>0 ? spend/linkClicks : null,
+      cpm: impressions>0 ? spend/impressions*1000 : null,
+      reach, frequency: reach>0 ? impressions/reach : null, lpv
+    };
+  });
+}
+function buildCreativesScope(days){
+  if (!days.length){
+    const byKey = {};
+    DATA.meta.creatives.forEach(r=>{
+      const k = r.adset+'|'+r.name;
+      if (!byKey[k]) byKey[k] = { adset:r.adset, type:r.type, name:r.name, adId:r.adId, spend:null, leads:null, cpl:null, impressions:null, linkClicks:null, lpv:null, vendas:null };
+    });
+    return Object.values(byKey);
+  }
+  const byKey = {};
+  days.forEach(d=>{
+    (d.creatives||[]).forEach(r=>{
+      const k = r.adset+'|'+r.name;
+      if (!byKey[k]) byKey[k] = { adset:r.adset, type:r.type, name:r.name, adId:r.adId, spend:0, leads:0, impressions:0, linkClicks:0, lpv:0, vendas:null };
+      byKey[k].spend += r.spend; byKey[k].leads += r.leads; byKey[k].impressions += r.impressions;
+      byKey[k].linkClicks += r.linkClicks; byKey[k].lpv += r.lpv;
+    });
+  });
+  const list = Object.values(byKey);
+  list.forEach(r => r.cpl = r.leads>0 ? r.spend/r.leads : null);
+  return list;
+}
+function applyDateFilter(range){
+  const note = document.getElementById('filterNote');
+  if (!range){
+    renderExecKpis(); renderMetaDetail(); renderAudiences(); renderCreatives();
+    note.textContent = '';
+    return;
+  }
+  const days = daysInRange(range.start, range.end);
+  const scope = { account: buildAccountScope(days), audiences: buildAudiencesScope(days), creatives: buildCreativesScope(days) };
+  renderExecKpis(scope); renderMetaDetail(scope); renderAudiences(scope); renderCreatives(scope);
+  if (!days.length){
+    note.textContent = 'Sem execuções com quebra diária guardadas entre ' + fmtDate(range.start+'T12:00:00') + ' e ' + fmtDate(range.end+'T12:00:00') + '. Assim que a rotina horária registar dias nesse intervalo, os valores aparecem aqui automaticamente — nada foi estimado.';
+  } else {
+    const multiDay = days.length>1;
+    note.textContent = 'A mostrar ' + days.length + ' dia' + (days.length>1?'s':'') + ' (' + days.map(d=>fmtDayShort(d.date+'T12:00:00')).join(', ') + ').' + (multiDay ? ' Alcance e Frequência são somados/recalculados de forma aproximada em intervalos com mais de 1 dia — a Meta não soma reach/frequência de forma exata entre dias.' : '');
+  }
+}
+(function filterUI(){
+  const btns = document.querySelectorAll('.filter-btn');
+  const startInput = document.getElementById('filterStart');
+  const endInput = document.getElementById('filterEnd');
+  function setActive(mode){ btns.forEach(b=> b.classList.toggle('active', b.dataset.range===mode)); }
+  function rangeForMode(mode){
+    const todayStr = lisbonDateStr(now);
+    if (mode==='today') return { start: todayStr, end: todayStr };
+    if (mode==='last7'){ const d = new Date(now); d.setDate(d.getDate()-6); return { start: lisbonDateStr(d), end: todayStr }; }
+    return null; // 'all' = período todo
+  }
+  btns.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const mode = b.dataset.range;
+      setActive(mode);
+      const r = rangeForMode(mode);
+      startInput.value = r ? r.start : '';
+      endInput.value = r ? r.end : '';
+      applyDateFilter(r);
+    });
+  });
+  document.getElementById('filterApply').addEventListener('click', ()=>{
+    if (!startInput.value || !endInput.value) return;
+    let start = startInput.value, end = endInput.value;
+    if (start > end){ const tmp=start; start=end; end=tmp; startInput.value=start; endInput.value=end; }
+    setActive('custom');
+    applyDateFilter({ start, end });
+  });
+  document.getElementById('filterClear').addEventListener('click', ()=>{
+    startInput.value=''; endInput.value='';
+    setActive('all');
+    applyDateFilter(null);
+  });
+  setActive('all'); // estado inicial: Período todo — o mesmo comportamento de sempre
+})();
+</script>
+
+</body></html>
